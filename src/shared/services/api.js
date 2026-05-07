@@ -2,7 +2,7 @@
 // that may not allow CORS. In production, set VITE_API_URL at build time.
 const API_BASE_URL =
 	import.meta.env.VITE_API_URL?.replace(/\/$/, "") ||
-	"http://localhost:8080/api";
+	"https://giathinh.duckdns.org/api/auths/login";
 
 const TOKEN_KEY = "habitos_token";
 const USER_KEY = "habitos_user";
