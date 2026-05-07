@@ -36,7 +36,7 @@ function HabitsPage() {
 
 		try {
 			const data = await fetchHabits();
-			setHabits(Array.isArray(data) ? data : data?.habits || []);
+			setHabits(Array.isArray(data) ? data : []);
 		} catch (err) {
 			setError(err?.message || "Không thể tải danh sách thói quen.");
 		} finally {
@@ -44,10 +44,10 @@ function HabitsPage() {
 		}
 	};
 
-		useEffect(() => {
-			// eslint-disable-next-line react-hooks/set-state-in-effect
-			loadHabits();
-		}, []);
+	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect
+		loadHabits();
+	}, []);
 
 	const handleChange = (event) => {
 		const { name, value } = event.target;
@@ -255,17 +255,49 @@ function HabitsPage() {
 					<ul className="habit-list">
 						{habits.map((habit) => {
 							const habitId = habit.id || habit._id;
+							const isActive =
+								habit.isActive === true || habit.isActive === "true";
 
 							return (
 								<li key={habitId} className="habit-item">
-									<div>
-										<h3>{habit.name}</h3>
-										<p>
-											{habit.type || "COUNT"} · {habit.frequency || "DAILY"}
-										</p>
+									<div className="habit-content">
+										<div className="habit-header">
+											<h3>{habit.name}</h3>
+											<div className="habit-tags">
+												<span className="habit-tag">
+													{habit.type || "COUNT"}
+												</span>
+												<span className="habit-tag">
+													{habit.frequency || "DAILY"}
+												</span>
+												<span
+													className={`habit-tag ${
+														isActive ? "active" : "inactive"
+													}`}
+												>
+													{isActive ? "Đang hoạt động" : "Tạm dừng"}
+												</span>
+											</div>
+										</div>
 										{habit.description ? (
 											<p className="note">{habit.description}</p>
 										) : null}
+										<div className="habit-details">
+											<div>
+												<span className="detail-label">Frequency days</span>
+												<span>
+													{habit.frequencyDays || "—"}
+												</span>
+											</div>
+											<div>
+												<span className="detail-label">Icon</span>
+												<span>{habit.icon || "—"}</span>
+											</div>
+											<div>
+												<span className="detail-label">Colour</span>
+												<span>{habit.colour || "—"}</span>
+											</div>
+										</div>
 									</div>
 									<div className="item-actions">
 										<button

@@ -1,8 +1,8 @@
-// Default to local API gateway in development to avoid hitting remote server
-// that may not allow CORS. In production, set VITE_API_URL at build time.
+// Default to the deployed API gateway. Override with VITE_API_URL in development
+// if you want to point to a local server like http://localhost:8080/api.
 const API_BASE_URL =
 	import.meta.env.VITE_API_URL?.replace(/\/$/, "") ||
-	"https://giathinh.duckdns.org/api/auths/login";
+	"https://giathinh.duckdns.org/api";
 
 const TOKEN_KEY = "habitos_token";
 const USER_KEY = "habitos_user";
