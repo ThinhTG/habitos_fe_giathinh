@@ -106,6 +106,14 @@
   font-weight: 600;
 }
 
+.form-success {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(31, 143, 95, 0.12);
+  color: #1f8f5f;
+  font-weight: 600;
+}
+
 .primary,
 .ghost,
 .danger {
@@ -272,6 +280,11 @@
 .status {
   color: var(--muted);
   margin: 0;
+}
+
+.status.error {
+  color: var(--danger);
+  font-weight: 600;
 }
 
 .welcome-card {
