@@ -36,6 +36,13 @@ function HabitsPage() {
 	const [error, setError] = useState("");
 	const [notice, setNotice] = useState("");
 	const [isSaving, setIsSaving] = useState(false);
+	const [debugInfo, setDebugInfo] = useState({
+		count: 0,
+		payloadType: "unknown",
+		apiBase:
+			import.meta.env.VITE_API_URL?.replace(/\/$/, "") ||
+			"https://giathinh.duckdns.org/api",
+	});
 
 	const isEditing = useMemo(() => editingId !== null, [editingId]);
 
@@ -49,6 +56,15 @@ function HabitsPage() {
 			const normalized = normalizeHabits(data);
 			setHabits(normalized);
 			setNotice(`Đã tải ${normalized.length} thói quen.`);
+			setDebugInfo((prev) => ({
+				...prev,
+				count: normalized.length,
+				payloadType: Array.isArray(data)
+					? "array"
+					: data && typeof data === "object"
+						? "object"
+						: typeof data,
+			}));
 		} catch (err) {
 			setError(err?.message || "Không thể tải danh sách thói quen.");
 		} finally {
@@ -266,6 +282,11 @@ function HabitsPage() {
 						Làm mới
 					</button>
 				</div>
+
+				<p className="debug-info">
+					API: {debugInfo.apiBase} · Payload: {debugInfo.payloadType} ·
+					Số thói quen: {debugInfo.count}
+				</p>
 
 				{isLoading ? (
 					<p className="status">Đang tải...</p>
