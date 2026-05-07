@@ -19,6 +19,14 @@ const emptyHabit = {
 	colour: "",
 };
 
+const normalizeHabits = (payload) => {
+	if (Array.isArray(payload)) return payload;
+	if (Array.isArray(payload?.data)) return payload.data;
+	if (Array.isArray(payload?.habits)) return payload.habits;
+	if (Array.isArray(payload?.items)) return payload.items;
+	return [];
+};
+
 function HabitsPage() {
 	const navigate = useNavigate();
 	const [habits, setHabits] = useState([]);
@@ -26,17 +34,21 @@ function HabitsPage() {
 	const [editingId, setEditingId] = useState(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState("");
+	const [notice, setNotice] = useState("");
 	const [isSaving, setIsSaving] = useState(false);
 
 	const isEditing = useMemo(() => editingId !== null, [editingId]);
 
 	const loadHabits = async () => {
 		setError("");
+		setNotice("");
 		setIsLoading(true);
 
 		try {
 			const data = await fetchHabits();
-			setHabits(Array.isArray(data) ? data : []);
+			const normalized = normalizeHabits(data);
+			setHabits(normalized);
+			setNotice(`Đã tải ${normalized.length} thói quen.`);
 		} catch (err) {
 			setError(err?.message || "Không thể tải danh sách thói quen.");
 		} finally {
@@ -78,13 +90,16 @@ function HabitsPage() {
 	const handleSubmit = async (event) => {
 		event.preventDefault();
 		setError("");
+		setNotice("");
 		setIsSaving(true);
 
 		try {
 			if (isEditing) {
 				await updateHabit(editingId, formState);
+				setNotice("Đã cập nhật thói quen.");
 			} else {
 				await createHabit(formState);
+				setNotice("Đã tạo thói quen mới.");
 			}
 
 			await loadHabits();
@@ -106,10 +121,12 @@ function HabitsPage() {
 		if (!shouldDelete) return;
 
 		setError("");
+		setNotice("");
 
 		try {
 			await deleteHabit(habitId);
 			await loadHabits();
+			setNotice("Đã xoá thói quen.");
 		} catch (err) {
 			setError(err?.message || "Không thể xoá thói quen.");
 		}
@@ -223,6 +240,7 @@ function HabitsPage() {
 					</label>
 
 					{error ? <p className="form-error">{error}</p> : null}
+					{notice ? <p className="form-success">{notice}</p> : null}
 
 					<div className="actions">
 						<button className="primary" type="submit" disabled={isSaving}>
@@ -251,6 +269,8 @@ function HabitsPage() {
 
 				{isLoading ? (
 					<p className="status">Đang tải...</p>
+				) : error ? (
+					<p className="status error">{error}</p>
 				) : habits.length ? (
 					<ul className="habit-list">
 						{habits.map((habit) => {
