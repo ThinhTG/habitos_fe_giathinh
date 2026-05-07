@@ -1,8 +1,14 @@
 // Default to the deployed API gateway. Override with VITE_API_URL in development
 // if you want to point to a local server like http://localhost:8080/api.
+const configuredBaseUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
+const isLocalHost =
+	window?.location?.hostname === "localhost" ||
+	window?.location?.hostname === "127.0.0.1";
+
 const API_BASE_URL =
-	import.meta.env.VITE_API_URL?.replace(/\/$/, "") ||
-	"https://giathinh.duckdns.org/api";
+	!configuredBaseUrl || (!isLocalHost && configuredBaseUrl === "/api")
+		? "https://giathinh.duckdns.org/api"
+		: configuredBaseUrl;
 
 const TOKEN_KEY = "habitos_token";
 const USER_KEY = "habitos_user";
