@@ -8,6 +8,7 @@ import {
 	deleteHabit,
 } from "@/features/habits/api/habitApi";
 import { logout } from "@/features/auth/api/authApi";
+import Sidebar from "@/shared/components/Sidebar";
 
 const emptyHabit = {
 	name: "",
@@ -54,6 +55,8 @@ function HabitsPage() {
 	const [error, setError] = useState("");
 	const [notice, setNotice] = useState("");
 	const [isSaving, setIsSaving] = useState(false);
+	const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 	const [pagination, setPagination] = useState({
 		offset: 0,
 		limit: 10,
@@ -123,6 +126,14 @@ function HabitsPage() {
 			...prev,
 			offset: (safePage - 1) * prev.limit,
 		}));
+	};
+
+	const handleSidebarToggle = () => {
+		if (isSidebarOpen) {
+			setIsSidebarOpen(false);
+			return;
+		}
+		setIsSidebarCollapsed((prev) => !prev);
 	};
 
 	const handleLimitChange = (event) => {
@@ -207,23 +218,54 @@ function HabitsPage() {
 
 	const handleLogout = () => {
 		logout();
-			navigate("/");
+		navigate("/");
+	};
+
+	const handleNavigate = (path) => {
+		if (!path) return;
+		setIsSidebarOpen(false);
+		navigate(path);
 	};
 
 	return (
-		<main className="page habits-page">
-			<header className="page-header">
-				<div>
-					<p className="eyebrow">HabitOS</p>
-					<h1>Manage Habits</h1>
-					<p className="subtitle">Tạo mới, chỉnh sửa và theo dõi thói quen.</p>
-				</div>
-				<button className="ghost" type="button" onClick={handleLogout}>
-					Đăng xuất
-				</button>
-			</header>
+		<div className="app-shell">
+			<Sidebar
+				activeKey="habits"
+				isCollapsed={isSidebarCollapsed}
+				isMobileOpen={isSidebarOpen}
+				onToggle={handleSidebarToggle}
+				onNavigate={handleNavigate}
+				onLogout={handleLogout}
+			/>
+			{isSidebarOpen ? (
+				<button
+					className="sidebar-overlay"
+					type="button"
+					onClick={() => setIsSidebarOpen(false)}
+					aria-label="Đóng sidebar"
+				/>
+			) : null}
+			<main className="page habits-page main-content">
+				<header className="page-header">
+					<div className="page-title">
+						<button
+							className="ghost sidebar-mobile-trigger"
+							type="button"
+							onClick={() => setIsSidebarOpen(true)}
+						>
+							☰
+						</button>
+						<div>
+							<p className="eyebrow">HabitOS</p>
+							<h1>Manage Habits</h1>
+							<p className="subtitle">
+								Tạo mới, chỉnh sửa và theo dõi thói quen.
+							</p>
+						</div>
+					</div>
+				</header>
 
-			<section className="card form-card">
+				<section className="card form-card">
 				<h2>{isEditing ? "Cập nhật thói quen" : "Thêm thói quen mới"}</h2>
 				<form className="form" onSubmit={handleSubmit}>
 					<div className="grid">
@@ -330,9 +372,9 @@ function HabitsPage() {
 						) : null}
 					</div>
 				</form>
-			</section>
+				</section>
 
-			<section className="card list-card">
+				<section className="card list-card">
 				<div className="list-header">
 					<h2>Danh sách thói quen</h2>
 					<button className="ghost" type="button" onClick={loadHabits}>
@@ -454,8 +496,9 @@ function HabitsPage() {
 				) : (
 					<p className="status">Bạn chưa có thói quen nào.</p>
 				)}
-			</section>
-		</main>
+				</section>
+			</main>
+		</div>
 	);
 }
 
