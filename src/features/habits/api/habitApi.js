@@ -13,6 +13,15 @@ export const fetchHabits = async () => {
 	return unwrap(payload);
 };
 
+export const fetchHabitsPaging = async ({ offset = 0, limit = 20 } = {}) => {
+	const params = new URLSearchParams({
+		offset: String(offset),
+		limit: String(limit),
+	});
+	const payload = await request(`/habits/paging?${params.toString()}`);
+	return unwrap(payload);
+};
+
 export const createHabit = async (habit) => {
 	const payload = await request("/habits", {
 		method: "POST",
