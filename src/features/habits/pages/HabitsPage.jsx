@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
-	fetchHabits,
+	fetchHabitsPaging,
 	createHabit,
 	updateHabit,
 	deleteHabit,
@@ -27,6 +27,24 @@ const normalizeHabits = (payload) => {
 	return [];
 };
 
+const normalizePaging = (payload) => {
+	if (!payload || typeof payload !== "object") {
+		return {
+			items: [],
+			offset: 0,
+			limit: 20,
+			total: 0,
+		};
+	}
+
+	return {
+		items: Array.isArray(payload.items) ? payload.items : normalizeHabits(payload),
+		offset: Number.isFinite(payload.offset) ? payload.offset : 0,
+		limit: Number.isFinite(payload.limit) ? payload.limit : 20,
+		total: Number.isFinite(payload.total) ? payload.total : 0,
+	};
+};
+
 function HabitsPage() {
 	const navigate = useNavigate();
 	const [habits, setHabits] = useState([]);
@@ -36,6 +54,11 @@ function HabitsPage() {
 	const [error, setError] = useState("");
 	const [notice, setNotice] = useState("");
 	const [isSaving, setIsSaving] = useState(false);
+	const [pagination, setPagination] = useState({
+		offset: 0,
+		limit: 10,
+		total: 0,
+	});
 	const [debugInfo, setDebugInfo] = useState({
 		count: 0,
 		payloadType: "unknown",
@@ -45,20 +68,37 @@ function HabitsPage() {
 	});
 
 	const isEditing = useMemo(() => editingId !== null, [editingId]);
+	const pageIndex = useMemo(
+		() => Math.floor(pagination.offset / pagination.limit) + 1,
+		[pagination.offset, pagination.limit]
+	);
+	const totalPages = useMemo(() => {
+		if (!pagination.total || !pagination.limit) return 1;
+		return Math.max(1, Math.ceil(pagination.total / pagination.limit));
+	}, [pagination.total, pagination.limit]);
 
-	const loadHabits = async () => {
+	const loadHabits = useCallback(async () => {
 		setError("");
 		setNotice("");
 		setIsLoading(true);
 
 		try {
-			const data = await fetchHabits();
-			const normalized = normalizeHabits(data);
-			setHabits(normalized);
-			setNotice(`Đã tải ${normalized.length} thói quen.`);
+			const data = await fetchHabitsPaging({
+				offset: pagination.offset,
+				limit: pagination.limit,
+			});
+			const page = normalizePaging(data);
+			setHabits(page.items);
+			setPagination((prev) => ({
+				...prev,
+				offset: page.offset,
+				limit: page.limit,
+				total: page.total,
+			}));
+			setNotice(`Đã tải ${page.items.length} thói quen.`);
 			setDebugInfo((prev) => ({
 				...prev,
-				count: normalized.length,
+				count: page.items.length,
 				payloadType: Array.isArray(data)
 					? "array"
 					: data && typeof data === "object"
@@ -70,12 +110,29 @@ function HabitsPage() {
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, [pagination.offset, pagination.limit]);
 
 	useEffect(() => {
 		// eslint-disable-next-line react-hooks/set-state-in-effect
 		loadHabits();
-	}, []);
+	}, [loadHabits]);
+
+	const handlePageChange = (nextPage) => {
+		const safePage = Math.min(Math.max(1, nextPage), totalPages);
+		setPagination((prev) => ({
+			...prev,
+			offset: (safePage - 1) * prev.limit,
+		}));
+	};
+
+	const handleLimitChange = (event) => {
+		const nextLimit = Number(event.target.value);
+		setPagination((prev) => ({
+			...prev,
+			limit: Number.isFinite(nextLimit) && nextLimit > 0 ? nextLimit : prev.limit,
+			offset: 0,
+		}));
+	};
 
 	const handleChange = (event) => {
 		const { name, value } = event.target;
@@ -281,6 +338,40 @@ function HabitsPage() {
 					<button className="ghost" type="button" onClick={loadHabits}>
 						Làm mới
 					</button>
+				</div>
+
+				<div className="list-meta">
+					<div className="pagination-info">
+						Trang {pageIndex} / {totalPages}
+						{pagination.total ? ` · Tổng ${pagination.total}` : ""}
+					</div>
+					<div className="pagination-controls">
+						<button
+							className="ghost"
+							type="button"
+							onClick={() => handlePageChange(pageIndex - 1)}
+							disabled={pageIndex <= 1 || isLoading}
+						>
+							Trang trước
+						</button>
+						<button
+							className="ghost"
+							type="button"
+							onClick={() => handlePageChange(pageIndex + 1)}
+							disabled={pageIndex >= totalPages || isLoading}
+						>
+							Trang sau
+						</button>
+						<label className="page-size">
+							Hiển thị
+							<select value={pagination.limit} onChange={handleLimitChange}>
+								<option value={5}>5</option>
+								<option value={10}>10</option>
+								<option value={20}>20</option>
+								<option value={50}>50</option>
+							</select>
+						</label>
+					</div>
 				</div>
 
 				<p className="debug-info">
